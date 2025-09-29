@@ -44,28 +44,30 @@ fi
 
 echo "✓ HTTP is working"
 
-# Check if certificate already exists
+# Check if certificate already exists in container
 echo ""
-if [ -d "nginx/certbot/conf/live/$DOMAIN" ]; then
-    echo ">>> Checking existing SSL certificate..."
-    echo "✓ SSL certificate already exists at: nginx/certbot/conf/live/$DOMAIN"
+echo ">>> Checking for existing SSL certificate..."
+
+CERT_CHECK=$(docker-compose -f docker-compose.prod.yml run --rm --entrypoint "sh -c 'if [ -d /etc/letsencrypt/live/$DOMAIN ]; then echo EXISTS; else echo NOTFOUND; fi'" certbot 2>/dev/null | grep -o "EXISTS\|NOTFOUND" | head -1)
+
+if [ "$CERT_CHECK" = "EXISTS" ]; then
+    echo "✓ SSL certificate already exists for $DOMAIN"
 
     # Check certificate expiry
-    CERT_FILE="nginx/certbot/conf/live/$DOMAIN/cert.pem"
-    if [ -f "$CERT_FILE" ]; then
-        EXPIRY=$(docker-compose -f docker-compose.prod.yml run --rm --entrypoint "openssl x509 -enddate -noout -in /etc/letsencrypt/live/$DOMAIN/cert.pem" certbot 2>/dev/null | cut -d= -f2)
-        if [ -n "$EXPIRY" ]; then
-            echo "📅 Certificate expires: $EXPIRY"
-        fi
+    echo ">>> Checking certificate validity..."
+    EXPIRY=$(docker-compose -f docker-compose.prod.yml run --rm --entrypoint "openssl x509 -enddate -noout -in /etc/letsencrypt/live/$DOMAIN/cert.pem" certbot 2>/dev/null | grep "notAfter" | cut -d= -f2)
+    if [ -n "$EXPIRY" ]; then
+        echo "📅 Certificate expires: $EXPIRY"
     fi
 
     echo ""
-    echo "Skipping certificate request (already exists)"
+    echo "✓ Certificate is valid, skipping request"
 else
     echo ">>> Requesting NEW SSL certificate from Let's Encrypt..."
     echo "⏳ This may take 30-60 seconds..."
     echo ""
 
+    # Request new certificate
     docker-compose -f docker-compose.prod.yml run --rm certbot certonly \
         --webroot \
         --webroot-path=/var/www/certbot \
@@ -75,7 +77,16 @@ else
         --non-interactive \
         -d $DOMAIN
 
-    if [ $? -ne 0 ]; then
+    EXIT_CODE=$?
+
+    # Certbot returns 0 even when "No renewals were attempted" if cert exists
+    # Check again if certificate exists now
+    CERT_CHECK_AFTER=$(docker-compose -f docker-compose.prod.yml run --rm --entrypoint "sh -c 'if [ -d /etc/letsencrypt/live/$DOMAIN ]; then echo EXISTS; else echo NOTFOUND; fi'" certbot 2>/dev/null | grep -o "EXISTS\|NOTFOUND" | head -1)
+
+    if [ "$CERT_CHECK_AFTER" = "EXISTS" ]; then
+        echo ""
+        echo "✓ SSL Certificate is ready!"
+    elif [ $EXIT_CODE -ne 0 ]; then
         echo ""
         echo "❌ Failed to obtain SSL certificate"
         echo ""
@@ -90,23 +101,19 @@ else
         echo "  curl http://$DOMAIN"
         exit 1
     fi
-
-    echo ""
-    echo "✓ SSL Certificate obtained successfully!"
 fi
 
 echo ""
 echo ">>> Enabling HTTPS in Nginx configuration..."
 
-# Backup current config
-BACKUP_FILE="nginx/conf.d/app.conf.backup-$(date +%Y%m%d-%H%M%S)"
-cp nginx/conf.d/app.conf "$BACKUP_FILE"
-echo "✓ Backup created: $BACKUP_FILE"
-
-# Copy SSL-enabled configuration
-echo ">>> Copying SSL-enabled Nginx configuration..."
-cp nginx/conf.d/app-ssl.conf nginx/conf.d/app.conf
-echo "✓ SSL configuration applied"
+# Check if SSL configuration is already active
+if grep -q "listen 443 ssl" nginx/conf.d/app.conf; then
+    echo "✓ SSL configuration is already active in app.conf"
+else
+    echo "⚠️  SSL configuration not found in app.conf"
+    echo "Please ensure nginx/conf.d/app.conf has SSL configuration"
+    exit 1
+fi
 
 # Restart nginx to apply SSL configuration
 echo ""
