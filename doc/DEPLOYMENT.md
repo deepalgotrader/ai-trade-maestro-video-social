@@ -1,793 +1,841 @@
-# AI TradeMaestro - Guida al Deployment in Produzione
+# 🚀 Guida al Deployment in Produzione
 
-## Panoramica del Deployment
+Questa guida ti aiuterà a deployare **AI TradeMaestro** in produzione sul tuo VPS con il dominio **aitrademaestro.ddns.net**.
 
-Questa guida fornisce istruzioni dettagliate per il deployment di AI TradeMaestro in ambiente di produzione utilizzando Docker, Nginx e configurazioni sicure.
+## 📋 Prerequisiti
 
-## Prerequisiti Produzione
+1. **VPS/Server** con accesso root o sudo
+2. **Dominio DDNS configurato**: aitrademaestro.ddns.net
+3. **Porte aperte**: 80 (HTTP) e 443 (HTTPS)
+4. **DNS puntato correttamente** al tuo VPS
 
-### Infrastructure Requirements
+## 🌐 Passo 1: Configurazione DDNS
 
-#### Server Minimo
-- **CPU**: 2 core (4 core raccomandati)
-- **RAM**: 4GB (8GB raccomandati)
-- **Storage**: 50GB SSD (100GB raccomandati)
-- **Network**: 100 Mbps bandwidth
-- **OS**: Ubuntu 20.04 LTS o CentOS 8+
+Il dominio **aitrademaestro.ddns.net** è un dominio dinamico (DDNS). Assicurati che:
 
-#### Software Stack
-- **Docker**: 20.10.0+
-- **Docker Compose**: 2.0.0+
-- **Nginx**: (tramite container)
-- **SSL Certificate**: Let's Encrypt o certificato commerciale
+1. Il tuo servizio DDNS (es. No-IP, DuckDNS, ecc.) sia configurato
+2. Il dominio punti all'IP pubblico del tuo VPS
+3. Se il tuo IP cambia, il servizio DDNS lo aggiorni automaticamente
 
-### Domain e DNS
-- **Dominio principale**: `aitrademaestro.com`
-- **API subdomain**: `api.aitrademaestro.com`
-- **CDN subdomain**: `cdn.aitrademaestro.com` (opzionale)
-
-## Preparazione Server
-
-### 1. Setup Server Iniziale
-
+**Verifica che il dominio punti al tuo VPS:**
 ```bash
-# Update sistema
-sudo apt update && sudo apt upgrade -y
+# Dovrebbe restituire l'IP pubblico del tuo VPS
+dig aitrademaestro.ddns.net
 
-# Install essentials
-sudo apt install -y curl wget git htop ufw
-
-# Setup firewall
-sudo ufw allow ssh
-sudo ufw allow 80
-sudo ufw allow 443
-sudo ufw --force enable
+# Oppure
+nslookup aitrademaestro.ddns.net
 ```
 
-### 2. Installazione Docker
+## 🔧 Passo 2: Setup Iniziale del Server
+
+### 2.1 - Accedi al VPS
 
 ```bash
-# Remove old versions
-sudo apt-get remove docker docker-engine docker.io containerd runc
+# Connettiti al tuo VPS via SSH
+ssh root@IP_DEL_TUO_VPS
 
-# Install Docker
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
+# Oppure con un utente specifico
+ssh utente@IP_DEL_TUO_VPS
+```
 
-# Add user to docker group
-sudo usermod -aG docker $USER
+### 2.2 - Clona il Repository
 
-# Install Docker Compose
-sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
+```bash
+# Crea la directory per le applicazioni web
+mkdir -p ~/web_apps
+cd ~/web_apps
 
-# Verify installation
+# Clona il repository
+git clone https://github.com/your-username/ai-trade-maestro-video-social.git
+cd ai-trade-maestro-video-social
+```
+
+### 2.3 - Installa Dipendenze Automaticamente
+
+Lo script `setup.sh` installerà automaticamente **TUTTE** le dipendenze necessarie:
+- ✅ Docker e Docker Compose
+- ✅ Node.js e npm
+- ✅ Python 3 e pip
+- ✅ Dipendenze di sistema (curl, wget, gnupg2, ecc.)
+
+```bash
+# Rendi eseguibile lo script
+chmod +x scripts/dev/setup.sh
+
+# Esegui lo script di setup
+./scripts/dev/setup.sh
+```
+
+**Lo script farà automaticamente:**
+1. Rileva il sistema operativo (Ubuntu/Debian/CentOS)
+2. Aggiorna i pacchetti di sistema
+3. Installa Docker se non presente
+4. Installa Docker Compose se non presente
+5. Installa Node.js LTS se non presente
+6. Installa Python 3 e pip se non presenti
+7. Installa dipendenze frontend (npm install)
+8. Installa dipendenze backend (pip install)
+9. Builda le immagini Docker per sviluppo
+
+**⏱️ Tempo stimato:** 5-15 minuti (dipende dalla connessione e dalle dipendenze già presenti)
+
+### 2.4 - Verifica l'Installazione
+
+Dopo il setup, verifica che tutto sia installato correttamente:
+
+```bash
+# Verifica Docker
 docker --version
+# Output atteso: Docker version 24.x.x
+
+# Verifica Docker Compose
 docker-compose --version
+# Output atteso: Docker Compose version v2.x.x
+
+# Verifica Node.js
+node --version
+# Output atteso: v20.x.x (o versione LTS)
+
+# Verifica npm
+npm --version
+# Output atteso: 10.x.x
+
+# Verifica Python
+python3 --version
+# Output atteso: Python 3.x.x
+
+# Verifica pip
+pip3 --version
+# Output atteso: pip 23.x.x
 ```
 
-### 3. Security Hardening
+**⚠️ Nota Importante:** Se hai installato Docker per la prima volta, potrebbe essere necessario:
 
 ```bash
-# Disable root SSH
-sudo sed -i 's/PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
-sudo systemctl restart ssh
+# Logout e login per applicare i permessi del gruppo Docker
+exit
 
-# Setup automatic updates
-sudo apt install unattended-upgrades
-sudo dpkg-reconfigure -plow unattended-upgrades
+# Riconnettiti
+ssh root@IP_DEL_TUO_VPS
 
-# Install fail2ban
-sudo apt install fail2ban
+# Oppure usa questo comando per aggiornare i gruppi
+newgrp docker
+```
+
+## 🔐 Passo 3: Configurazione Variabili d'Ambiente
+
+### 3.1 - Genera Password Sicure
+
+Prima di creare il file `.env.production`, genera tutte le password necessarie. Sul VPS esegui:
+
+```bash
+# Genera SECRET_KEY (64 caratteri)
+echo "SECRET_KEY=$(openssl rand -hex 32)"
+
+# Genera password PostgreSQL
+echo "POSTGRES_PASSWORD=$(openssl rand -base64 24)"
+
+# Genera password Redis
+echo "REDIS_PASSWORD=$(openssl rand -base64 24)"
+```
+
+**Copia questi valori** - ti serviranno nel prossimo step!
+
+### 3.2 - Crea il File .env.production
+
+```bash
+# Vai nella directory del progetto
+cd ~/web_apps/ai-trade-maestro-video-social
+
+# Copia il template
+cp .env.production.example .env.production
+
+# Modifica il file
+nano .env.production
+```
+
+### 3.3 - Configura le Variabili
+
+Inserisci i valori generati nel file `.env.production`:
+
+```env
+# Database Configuration
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=K9m2PqXz4Lw8Rt5Nh3Vb2Qw9  # ← Incolla la password generata
+POSTGRES_DB=aitrademaestro
+
+# Redis Configuration
+REDIS_PASSWORD=Yz8Jn5Vb2Qw9Fd6Mh1Kp3Rs7  # ← Incolla la password generata
+
+# Backend Configuration
+SECRET_KEY=a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b8c9d0e1f2  # ← Incolla la chiave generata (minimo 64 caratteri)
+ENVIRONMENT=production
+
+# SSL Configuration
+SSL_EMAIL=tua-email-reale@gmail.com  # ← Inserisci la TUA email (per notifiche Let's Encrypt)
+```
+
+**📋 Spiegazione delle Variabili:**
+
+| Variabile | Descrizione | Esempio |
+|-----------|-------------|---------|
+| `POSTGRES_USER` | Username database (lascia `postgres`) | `postgres` |
+| `POSTGRES_PASSWORD` | Password database (24+ caratteri random) | `K9m2PqXz4Lw8Rt5Nh3Vb2Qw9` |
+| `POSTGRES_DB` | Nome database (lascia `aitrademaestro`) | `aitrademaestro` |
+| `REDIS_PASSWORD` | Password Redis (24+ caratteri random, DIVERSA da Postgres) | `Yz8Jn5Vb2Qw9Fd6Mh1Kp3Rs7` |
+| `SECRET_KEY` | Chiave segreta backend (64+ caratteri random) | `a1b2c3...` |
+| `ENVIRONMENT` | Ambiente di esecuzione (lascia `production`) | `production` |
+| `SSL_EMAIL` | La tua email reale per certificati SSL | `tua@email.com` |
+
+**⚠️ Regole di Sicurezza:**
+
+1. ✅ **Usa password generate** - NON usare password semplici come `password123`
+2. ✅ **Password diverse** - Database e Redis devono avere password DIVERSE
+3. ✅ **SECRET_KEY lungo** - Minimo 64 caratteri random
+4. ✅ **Email reale** - Riceverai notifiche importanti da Let's Encrypt
+5. ✅ **Salva in sicurezza** - Usa un password manager (Bitwarden, 1Password, LastPass)
+6. ❌ **MAI committare** - Il file `.env.production` è già nel `.gitignore`
+
+**Salva il file:**
+- Premi `Ctrl+O` per salvare
+- Premi `Enter` per confermare
+- Premi `Ctrl+X` per uscire
+
+### 3.4 - Verifica il File
+
+```bash
+# Verifica che il file esista e contenga i valori
+cat .env.production
+
+# Assicurati che non ci siano spazi extra o errori di sintassi
+```
+
+## 🚀 Passo 4: Deploy dell'Applicazione
+
+### 4.1 - Prepara gli Script
+
+```bash
+# Assicurati di essere nella directory del progetto
+cd ~/web_apps/ai-trade-maestro-video-social
+
+# Rendi eseguibili TUTTI gli script di produzione
+chmod +x scripts/prod/*.sh
+```
+
+### 4.2 - Esegui il Deploy Automatico
+
+```bash
+# Lancia il deployment completo
+./scripts/prod/deploy.sh
+```
+
+**🔄 Cosa fa lo script di deployment:**
+
+Lo script `deploy.sh` esegue automaticamente tutti questi step in sequenza:
+
+1. ✅ **Verifica `.env.production`** - Controlla che il file di configurazione esista
+2. ✅ **Ferma servizi esistenti** - Se ci sono deployment precedenti
+3. ✅ **Pull da Git (opzionale)** - Scarica gli ultimi aggiornamenti dal repository
+4. ✅ **Build immagini Docker** - Compila le immagini di backend e frontend
+5. ✅ **Avvia servizi temporanei** - Parte con configurazione HTTP (senza SSL)
+6. ✅ **Ottiene certificato SSL** - Richiede certificato da Let's Encrypt per HTTPS
+7. ✅ **Configura HTTPS** - Attiva la configurazione SSL su Nginx
+8. ✅ **Riavvia Nginx** - Applica la configurazione HTTPS
+9. ✅ **Esegue migrazioni database** - Crea/aggiorna le tabelle PostgreSQL
+10. ✅ **Verifica stato** - Controlla che tutti i container siano running
+
+**⏱️ Tempo stimato:** 5-10 minuti
+
+**📺 Output Atteso:**
+
+Durante il deployment vedrai output simile a:
+
+```
+==========================================
+AI TradeMaestro - Production Deployment
+==========================================
+
+>>> Stopping existing services...
+>>> Building Docker images...
+>>> Starting services (without SSL initially)...
+>>> Obtaining SSL certificate...
+Requesting SSL certificate for aitrademaestro.ddns.net...
+Successfully received certificate.
+Certificate is saved at: /etc/letsencrypt/live/aitrademaestro.ddns.net/fullchain.pem
+>>> Switching to SSL configuration...
+>>> Running database migrations...
+INFO  [alembic.runtime.migration] Running upgrade -> head
+
+==========================================
+Deployment Completed Successfully!
+==========================================
+
+Your application is now live at:
+  https://aitrademaestro.ddns.net
+```
+
+### 4.3 - Risoluzione Problemi Durante il Deploy
+
+**❌ Errore: "Failed to obtain SSL certificate"**
+
+Possibili cause:
+- Il dominio DDNS non punta al VPS
+- Le porte 80/443 non sono aperte
+- Nginx non è accessibile dall'esterno
+
+**Soluzione:**
+```bash
+# 1. Verifica il DNS
+dig aitrademaestro.ddns.net
+# Deve mostrare l'IP del tuo VPS
+
+# 2. Verifica le porte
+sudo netstat -tlnp | grep -E ':(80|443)'
+
+# 3. Testa l'accesso HTTP
+curl -I http://localhost
+
+# 4. Controlla i log
+docker logs aitrademaestro-nginx
+```
+
+**❌ Errore: "Database connection failed"**
+
+```bash
+# Verifica che PostgreSQL sia running
+docker ps | grep postgres
+
+# Controlla i log del database
+docker logs aitrademaestro-postgres
+
+# Verifica le credenziali in .env.production
+cat .env.production | grep POSTGRES
+```
+
+**❌ Errore: "Port already in use"**
+
+```bash
+# Trova quale processo usa la porta 80 o 443
+sudo lsof -i :80
+sudo lsof -i :443
+
+# Ferma il processo conflittuale (es. Apache)
+sudo systemctl stop apache2
+sudo systemctl disable apache2
+```
+
+## 🎉 Passo 5: Verifica
+
+Dopo il deployment, verifica che tutto funzioni:
+
+**Nel browser:**
+- Frontend: https://aitrademaestro.ddns.net
+- Backend API: https://aitrademaestro.ddns.net/api
+- Documentazione API: https://aitrademaestro.ddns.net/docs
+
+**Verifica i servizi:**
+```bash
+# Controlla che tutti i container siano attivi
+docker ps
+
+# Visualizza i log
+./scripts/prod/logs.sh
+```
+
+## 🔄 Comandi Utili
+
+### Gestione Servizi
+
+```bash
+# Avvia i servizi
+./scripts/prod/start.sh
+
+# Ferma i servizi
+./scripts/prod/stop.sh
+
+# Riavvia i servizi
+./scripts/prod/restart.sh
+
+# Visualizza i log in tempo reale
+./scripts/prod/logs.sh
+```
+
+### Aggiornamenti
+
+```bash
+# Per aggiornare l'applicazione
+git pull origin main
+./scripts/prod/deploy.sh
+```
+
+### Backup Database
+
+```bash
+# Backup del database
+docker exec aitrademaestro-postgres pg_dump -U postgres aitrademaestro > backup_$(date +%Y%m%d).sql
+
+# Ripristino del database
+docker exec -i aitrademaestro-postgres psql -U postgres aitrademaestro < backup_20241029.sql
+```
+
+## 🔒 Passo 6: Configurazione Sicurezza
+
+### 6.1 - Configura il Firewall (UFW)
+
+**⚠️ IMPORTANTE:** Configura SSH PRIMA di abilitare il firewall, altrimenti potresti perdere l'accesso!
+
+```bash
+# Verifica lo stato attuale
+sudo ufw status
+
+# Permetti SSH (IMPORTANTE! Fallo PRIMA di abilitare UFW!)
+sudo ufw allow 22/tcp
+
+# Permetti HTTP (per Let's Encrypt)
+sudo ufw allow 80/tcp
+
+# Permetti HTTPS (per traffico SSL)
+sudo ufw allow 443/tcp
+
+# Abilita il firewall
+sudo ufw enable
+
+# Verifica le regole
+sudo ufw status verbose
+```
+
+**Output atteso:**
+```
+Status: active
+
+To                         Action      From
+--                         ------      ----
+22/tcp                     ALLOW       Anywhere
+80/tcp                     ALLOW       Anywhere
+443/tcp                    ALLOW       Anywhere
+```
+
+### 6.2 - Rinnovo Automatico Certificati SSL
+
+I certificati SSL di Let's Encrypt sono validi per **90 giorni** e si rinnovano **automaticamente**.
+
+Il container `certbot` controlla ogni 12 ore se i certificati devono essere rinnovati.
+
+**Per verificare lo stato dei certificati:**
+
+```bash
+# Visualizza informazioni sui certificati
+docker-compose -f docker-compose.prod.yml run --rm certbot certificates
+```
+
+**Per forzare un rinnovo manuale:**
+
+```bash
+# Rinnova i certificati
+docker-compose -f docker-compose.prod.yml run --rm certbot renew
+
+# Riavvia Nginx per caricare i nuovi certificati
+docker-compose -f docker-compose.prod.yml restart nginx
+```
+
+### 6.3 - Best Practices Sicurezza
+
+**✅ Raccomandazioni:**
+
+1. **Cambia la porta SSH (opzionale ma consigliato):**
+```bash
+sudo nano /etc/ssh/sshd_config
+# Cambia: Port 22 → Port 2222
+sudo systemctl restart sshd
+sudo ufw allow 2222/tcp
+sudo ufw delete allow 22/tcp
+```
+
+2. **Disabilita login root via SSH:**
+```bash
+sudo nano /etc/ssh/sshd_config
+# Cambia: PermitRootLogin yes → PermitRootLogin no
+sudo systemctl restart sshd
+```
+
+3. **Usa autenticazione con chiave SSH invece di password:**
+```bash
+# Sul tuo computer locale
+ssh-keygen -t ed25519 -C "tua-email@example.com"
+ssh-copy-id utente@IP_VPS
+```
+
+4. **Installa fail2ban per protezione brute-force:**
+```bash
+sudo apt-get install fail2ban
 sudo systemctl enable fail2ban
 sudo systemctl start fail2ban
 ```
 
-## Configurazione Ambiente Produzione
-
-### 1. Struttura Directory
-
+5. **Backup regolari del database:**
 ```bash
-# Create application directory
-sudo mkdir -p /opt/aitrademaestro
-sudo chown $USER:$USER /opt/aitrademaestro
-cd /opt/aitrademaestro
-
-# Clone repository
-git clone <repository-url> .
-
-# Create production directories
-mkdir -p {nginx/ssl,nginx/conf.d,logs,backups,data/postgres,data/redis}
+# Crea uno script di backup
+nano ~/backup-db.sh
 ```
 
-### 2. Environment Variables
-
-#### Production .env
-
-```bash
-# Create production environment file
-cat > .env.production << 'EOF'
-# Environment
-ENVIRONMENT=production
-DEBUG=false
-
-# Security
-SECRET_KEY=super-secret-production-key-min-32-chars
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-
-# Database
-POSTGRES_DB=aitrademaestro_prod
-POSTGRES_USER=aitrademaestro
-POSTGRES_PASSWORD=secure-db-password-change-this
-DATABASE_URL=postgresql://aitrademaestro:secure-db-password-change-this@db:5432/aitrademaestro_prod
-
-# Redis
-REDIS_URL=redis://redis:6379/0
-REDIS_PASSWORD=secure-redis-password
-
-# API Configuration
-API_HOST=0.0.0.0
-API_PORT=8000
-API_WORKERS=4
-
-# Frontend
-VITE_API_BASE_URL=https://api.aitrademaestro.com
-VITE_ENVIRONMENT=production
-VITE_DEBUG=false
-
-# Email (configure based on your provider)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=noreply@aitrademaestro.com
-SMTP_PASSWORD=app-specific-password
-
-# Monitoring
-SENTRY_DSN=your-sentry-dsn-here
-LOG_LEVEL=info
-
-# Backup
-BACKUP_RETENTION_DAYS=30
-EOF
-
-# Secure the file
-chmod 600 .env.production
-```
-
-### 3. Docker Production Configuration
-
-#### Production Docker Compose
-
-```yaml
-# docker-compose.prod.yml
-version: '3.8'
-
-services:
-  nginx:
-    image: nginx:alpine
-    container_name: aitrademaestro_nginx
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
-      - ./logs/nginx:/var/log/nginx
-    depends_on:
-      - frontend
-      - backend
-    networks:
-      - aitrademaestro_network
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.prod
-    container_name: aitrademaestro_frontend
-    restart: unless-stopped
-    environment:
-      - NODE_ENV=production
-    volumes:
-      - frontend_dist:/app/dist
-    networks:
-      - aitrademaestro_network
-
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.prod
-    container_name: aitrademaestro_backend
-    restart: unless-stopped
-    env_file:
-      - .env.production
-    volumes:
-      - ./logs/backend:/app/logs
-      - ./data/uploads:/app/uploads
-    depends_on:
-      - db
-      - redis
-    networks:
-      - aitrademaestro_network
-
-  db:
-    image: postgres:15-alpine
-    container_name: aitrademaestro_db
-    restart: unless-stopped
-    env_file:
-      - .env.production
-    volumes:
-      - ./data/postgres:/var/lib/postgresql/data
-      - ./backups:/backups
-    networks:
-      - aitrademaestro_network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  redis:
-    image: redis:7-alpine
-    container_name: aitrademaestro_redis
-    restart: unless-stopped
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
-    volumes:
-      - ./data/redis:/data
-    networks:
-      - aitrademaestro_network
-    healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-volumes:
-  frontend_dist:
-
-networks:
-  aitrademaestro_network:
-    driver: bridge
-```
-
-## Configurazione SSL/HTTPS
-
-### 1. Let's Encrypt con Certbot
-
-```bash
-# Install certbot
-sudo apt install certbot python3-certbot-nginx
-
-# Generate SSL certificate
-sudo certbot certonly --standalone \
-  -d aitrademaestro.com \
-  -d api.aitrademaestro.com \
-  --email admin@aitrademaestro.com \
-  --agree-tos \
-  --no-eff-email
-
-# Copy certificates to nginx directory
-sudo cp /etc/letsencrypt/live/aitrademaestro.com/fullchain.pem ./nginx/ssl/
-sudo cp /etc/letsencrypt/live/aitrademaestro.com/privkey.pem ./nginx/ssl/
-sudo chown $USER:$USER ./nginx/ssl/*
-
-# Setup auto-renewal
-echo "0 12 * * * /usr/bin/certbot renew --quiet" | sudo crontab -
-```
-
-### 2. Nginx Production Configuration
-
-```nginx
-# nginx/nginx.conf
-events {
-    worker_connections 1024;
-}
-
-http {
-    include       /etc/nginx/mime.types;
-    default_type  application/octet-stream;
-
-    # Logging
-    log_format main '$remote_addr - $remote_user [$time_local] "$request" '
-                    '$status $body_bytes_sent "$http_referer" '
-                    '"$http_user_agent" "$http_x_forwarded_for"';
-
-    access_log /var/log/nginx/access.log main;
-    error_log /var/log/nginx/error.log warn;
-
-    # Optimization
-    sendfile on;
-    tcp_nopush on;
-    tcp_nodelay on;
-    keepalive_timeout 65;
-    types_hash_max_size 2048;
-    client_max_body_size 10M;
-
-    # Gzip compression
-    gzip on;
-    gzip_vary on;
-    gzip_min_length 1024;
-    gzip_types
-        text/plain
-        text/css
-        text/xml
-        text/javascript
-        application/json
-        application/javascript
-        application/xml+rss
-        application/atom+xml
-        image/svg+xml;
-
-    # Security headers
-    add_header X-Frame-Options DENY;
-    add_header X-Content-Type-Options nosniff;
-    add_header X-XSS-Protection "1; mode=block";
-    add_header Referrer-Policy "strict-origin-when-cross-origin";
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self' https://api.aitrademaestro.com;";
-
-    # Rate limiting
-    limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
-    limit_req_zone $binary_remote_addr zone=web:10m rate=30r/s;
-
-    # Upstream definitions
-    upstream frontend {
-        server frontend:3000;
-    }
-
-    upstream backend {
-        server backend:8000;
-    }
-
-    # HTTP to HTTPS redirect
-    server {
-        listen 80;
-        server_name aitrademaestro.com api.aitrademaestro.com;
-        return 301 https://$server_name$request_uri;
-    }
-
-    # Main website
-    server {
-        listen 443 ssl http2;
-        server_name aitrademaestro.com;
-
-        ssl_certificate /etc/nginx/ssl/fullchain.pem;
-        ssl_certificate_key /etc/nginx/ssl/privkey.pem;
-        ssl_protocols TLSv1.2 TLSv1.3;
-        ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384;
-        ssl_prefer_server_ciphers off;
-        ssl_session_cache shared:SSL:10m;
-        ssl_session_timeout 10m;
-
-        location / {
-            limit_req zone=web burst=20 nodelay;
-            proxy_pass http://frontend;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-        }
-    }
-
-    # API subdomain
-    server {
-        listen 443 ssl http2;
-        server_name api.aitrademaestro.com;
-
-        ssl_certificate /etc/nginx/ssl/fullchain.pem;
-        ssl_certificate_key /etc/nginx/ssl/privkey.pem;
-        ssl_protocols TLSv1.2 TLSv1.3;
-        ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384;
-        ssl_prefer_server_ciphers off;
-        ssl_session_cache shared:SSL:10m;
-        ssl_session_timeout 10m;
-
-        location / {
-            limit_req zone=api burst=10 nodelay;
-            proxy_pass http://backend;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-        }
-
-        location /health {
-            access_log off;
-            proxy_pass http://backend;
-        }
-    }
-}
-```
-
-## Build e Deployment
-
-### 1. Production Dockerfiles
-
-#### Frontend Dockerfile.prod
-
-```dockerfile
-# frontend/Dockerfile.prod
-FROM node:18-alpine AS builder
-
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-
-COPY . .
-RUN npm run build
-
-FROM nginx:alpine
-COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
-```
-
-#### Backend Dockerfile.prod
-
-```dockerfile
-# backend/Dockerfile.prod
-FROM python:3.11-slim
-
-WORKDIR /app
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy application
-COPY . .
-
-# Create non-root user
-RUN adduser --disabled-password --gecos '' appuser
-RUN chown -R appuser:appuser /app
-USER appuser
-
-EXPOSE 8000
-
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
-```
-
-### 2. Deployment Script
-
+Inserisci questo contenuto:
 ```bash
 #!/bin/bash
-# deploy.sh
-
-set -e
-
-echo "🚀 Starting AI TradeMaestro deployment..."
-
-# Variables
-COMPOSE_FILE="docker-compose.prod.yml"
-BACKUP_DIR="./backups/$(date +%Y%m%d_%H%M%S)"
-
-# Create backup
-echo "📦 Creating backup..."
+BACKUP_DIR=~/backups
 mkdir -p $BACKUP_DIR
-docker-compose -f $COMPOSE_FILE exec db pg_dump -U $POSTGRES_USER $POSTGRES_DB > $BACKUP_DIR/database.sql
-docker-compose -f $COMPOSE_FILE exec redis redis-cli --rdb - > $BACKUP_DIR/redis.rdb
+DATE=$(date +%Y%m%d_%H%M%S)
+docker exec aitrademaestro-postgres pg_dump -U postgres aitrademaestro | gzip > $BACKUP_DIR/backup_$DATE.sql.gz
+# Mantieni solo gli ultimi 7 backup
+find $BACKUP_DIR -name "backup_*.sql.gz" -mtime +7 -delete
+```
 
-# Pull latest code
-echo "📥 Pulling latest code..."
+```bash
+# Rendi eseguibile
+chmod +x ~/backup-db.sh
+
+# Aggiungi al crontab per backup giornaliero alle 2:00 AM
+crontab -e
+# Aggiungi: 0 2 * * * /root/backup-db.sh
+```
+
+## 🐛 Troubleshooting
+
+### Certificato SSL non ottenuto
+
+**Problema:** `Failed to obtain SSL certificate`
+
+**Soluzioni:**
+1. Verifica che il dominio DDNS punti al tuo VPS: `dig aitrademaestro.ddns.net`
+2. Assicurati che le porte 80 e 443 siano aperte: `sudo ufw status`
+3. Controlla i log di nginx: `docker logs aitrademaestro-nginx`
+4. Controlla i log di certbot: `docker logs aitrademaestro-certbot`
+
+### Servizi non raggiungibili
+
+**Problema:** L'applicazione non è accessibile dall'esterno
+
+**Soluzioni:**
+1. Verifica che i container siano attivi: `docker ps`
+2. Controlla i log: `./scripts/prod/logs.sh`
+3. Verifica il firewall: `sudo ufw status`
+4. Testa la connettività: `curl -I http://localhost`
+
+### Database connection error
+
+**Problema:** Backend non riesce a connettersi al database
+
+**Soluzioni:**
+1. Verifica che PostgreSQL sia attivo: `docker ps | grep postgres`
+2. Controlla le credenziali in `.env.production`
+3. Verifica i log del backend: `docker logs aitrademaestro-backend`
+4. Controlla la connessione: `docker exec aitrademaestro-postgres pg_isready`
+
+## 📊 Monitoraggio e Manutenzione
+
+### Monitoraggio Risorse
+
+**Controlla CPU, RAM e Network dei container:**
+
+```bash
+# Statistiche in tempo reale di tutti i container
+docker stats
+
+# Output esempio:
+# CONTAINER ID   NAME                    CPU %   MEM USAGE / LIMIT     MEM %
+# abc123         aitrademaestro-nginx    0.5%    50MiB / 2GiB         2.5%
+# def456         aitrademaestro-backend  5.2%    300MiB / 2GiB       15.0%
+# ...
+```
+
+**Controlla spazio disco:**
+
+```bash
+# Spazio disco generale
+df -h
+
+# Spazio usato da Docker
+docker system df
+
+# Pulisci risorse Docker inutilizzate
+docker system prune -a
+```
+
+### Visualizza Log
+
+**Log di tutti i servizi:**
+
+```bash
+# Log in tempo reale di tutti i container
+./scripts/prod/logs.sh
+
+# Oppure
+docker-compose -f docker-compose.prod.yml logs -f
+```
+
+**Log di servizi specifici:**
+
+```bash
+# Solo backend
+docker logs aitrademaestro-backend -f
+
+# Solo frontend
+docker logs aitrademaestro-frontend -f
+
+# Solo nginx (errori di connessione, SSL, ecc.)
+docker logs aitrademaestro-nginx -f
+
+# Solo database
+docker logs aitrademaestro-postgres -f
+
+# Ultimi 100 log del backend
+docker logs aitrademaestro-backend --tail 100
+
+# Log con timestamp
+docker logs aitrademaestro-backend -f --timestamps
+```
+
+### Health Check
+
+**Verifica stato dei servizi:**
+
+```bash
+# Lista di tutti i container in esecuzione
+docker ps
+
+# Verifica salute del database
+docker exec aitrademaestro-postgres pg_isready -U postgres
+
+# Verifica Redis
+docker exec aitrademaestro-redis redis-cli ping
+# Output atteso: PONG
+
+# Test endpoint backend
+curl https://aitrademaestro.ddns.net/api/health
+
+# Test frontend
+curl -I https://aitrademaestro.ddns.net
+```
+
+### Restart Servizi
+
+```bash
+# Riavvia tutti i servizi
+./scripts/prod/restart.sh
+
+# Riavvia solo un servizio specifico
+docker-compose -f docker-compose.prod.yml restart backend
+docker-compose -f docker-compose.prod.yml restart frontend
+docker-compose -f docker-compose.prod.yml restart nginx
+```
+
+## 🔄 Aggiornamenti e Manutenzione
+
+### Aggiornare l'Applicazione
+
+Quando ci sono nuove versioni del codice:
+
+```bash
+# 1. Connettiti al VPS
+ssh root@IP_VPS
+cd ~/web_apps/ai-trade-maestro-video-social
+
+# 2. Backup del database (IMPORTANTE!)
+docker exec aitrademaestro-postgres pg_dump -U postgres aitrademaestro | gzip > backup_$(date +%Y%m%d_%H%M%S).sql.gz
+
+# 3. Scarica gli aggiornamenti da Git
 git pull origin main
 
-# Build new images
-echo "🔨 Building new images..."
-docker-compose -f $COMPOSE_FILE build --no-cache
-
-# Stop old containers
-echo "⏹️ Stopping old containers..."
-docker-compose -f $COMPOSE_FILE down
-
-# Start new containers
-echo "▶️ Starting new containers..."
-docker-compose -f $COMPOSE_FILE up -d
-
-# Wait for services
-echo "⏳ Waiting for services to start..."
-sleep 30
-
-# Health check
-echo "🏥 Running health checks..."
-curl -f http://localhost/health || exit 1
-curl -f http://localhost:8000/health || exit 1
-
-# Cleanup old images
-echo "🧹 Cleaning up old images..."
-docker image prune -f
-
-echo "✅ Deployment completed successfully!"
+# 4. Ricostruisci e rideploya
+./scripts/prod/deploy.sh
 ```
 
-### 3. Database Migrations
+### Rollback (Torna alla Versione Precedente)
+
+Se qualcosa va storto dopo un aggiornamento:
 
 ```bash
-# Run migrations in production
-docker-compose -f docker-compose.prod.yml exec backend alembic upgrade head
+# 1. Vedi la lista dei commit
+git log --oneline -10
 
-# Create new migration
-docker-compose -f docker-compose.prod.yml exec backend alembic revision --autogenerate -m "Migration description"
+# 2. Torna al commit precedente
+git checkout <commit-hash>
+
+# 3. Rideploya
+./scripts/prod/deploy.sh
+
+# 4. Se il rollback è definitivo
+git reset --hard <commit-hash>
+git push origin main --force  # SOLO se sei sicuro!
 ```
 
-## Monitoring e Maintenance
+### Backup e Restore
 
-### 1. Health Monitoring
+**Backup Manuale del Database:**
 
 ```bash
-# health-check.sh
-#!/bin/bash
+# Backup compresso
+docker exec aitrademaestro-postgres pg_dump -U postgres aitrademaestro | gzip > backup_$(date +%Y%m%d_%H%M%S).sql.gz
 
-# Services to check
-SERVICES=("aitrademaestro_nginx" "aitrademaestro_frontend" "aitrademaestro_backend" "aitrademaestro_db" "aitrademaestro_redis")
+# Backup normale (non compresso)
+docker exec aitrademaestro-postgres pg_dump -U postgres aitrademaestro > backup.sql
 
-for service in "${SERVICES[@]}"; do
-    if docker ps | grep -q $service; then
-        echo "✅ $service is running"
-    else
-        echo "❌ $service is down"
-        # Send alert (email, Slack, etc.)
-        curl -X POST -H 'Content-type: application/json' \
-            --data '{"text":"🚨 Service '$service' is down on AI TradeMaestro production!"}' \
-            $SLACK_WEBHOOK_URL
-    fi
-done
-
-# Check disk space
-DISK_USAGE=$(df / | awk 'NR==2 {print $5}' | sed 's/%//')
-if [ $DISK_USAGE -gt 80 ]; then
-    echo "⚠️ Disk usage is at $DISK_USAGE%"
-fi
-
-# Check memory usage
-MEMORY_USAGE=$(free | awk 'NR==2{printf "%.2f", $3*100/$2}')
-if (( $(echo "$MEMORY_USAGE > 80" | bc -l) )); then
-    echo "⚠️ Memory usage is at $MEMORY_USAGE%"
-fi
+# Download backup sul tuo computer locale
+scp root@IP_VPS:~/backup_*.sql.gz ~/Desktop/
 ```
 
-### 2. Backup Strategy
+**Restore del Database:**
 
 ```bash
-# backup.sh
-#!/bin/bash
+# Da file compresso
+gunzip < backup_20241029_120000.sql.gz | docker exec -i aitrademaestro-postgres psql -U postgres aitrademaestro
 
-BACKUP_ROOT="/opt/aitrademaestro/backups"
-DATE=$(date +%Y%m%d_%H%M%S)
-BACKUP_DIR="$BACKUP_ROOT/$DATE"
-RETENTION_DAYS=30
+# Da file normale
+docker exec -i aitrademaestro-postgres psql -U postgres aitrademaestro < backup.sql
 
-# Create backup directory
-mkdir -p $BACKUP_DIR
-
-# Database backup
-echo "Backing up database..."
-docker-compose exec db pg_dump -U $POSTGRES_USER $POSTGRES_DB | gzip > $BACKUP_DIR/database.sql.gz
-
-# Redis backup
-echo "Backing up Redis..."
-docker-compose exec redis redis-cli --rdb - | gzip > $BACKUP_DIR/redis.rdb.gz
-
-# Application data backup
-echo "Backing up application data..."
-tar -czf $BACKUP_DIR/uploads.tar.gz ./data/uploads
-tar -czf $BACKUP_DIR/logs.tar.gz ./logs
-
-# Cleanup old backups
-echo "Cleaning up old backups..."
-find $BACKUP_ROOT -type d -mtime +$RETENTION_DAYS -exec rm -rf {} +
-
-echo "Backup completed: $BACKUP_DIR"
+# ATTENZIONE: Questo sovrascrive tutti i dati esistenti!
 ```
 
-### 3. Log Management
+**Backup dei file di configurazione:**
 
 ```bash
-# log-rotate.sh
-#!/bin/bash
+# Backup .env.production (contiene password!)
+cp .env.production .env.production.backup_$(date +%Y%m%d)
 
-# Rotate application logs
-docker-compose exec backend find /app/logs -name "*.log" -size +100M -exec gzip {} \;
+# Backup delle configurazioni nginx
+tar -czf nginx_backup_$(date +%Y%m%d).tar.gz nginx/
 
-# Cleanup old logs
-docker-compose exec backend find /app/logs -name "*.gz" -mtime +7 -delete
-
-# Nginx log rotation (handled by logrotate)
-cat > /etc/logrotate.d/aitrademaestro << 'EOF'
-/opt/aitrademaestro/logs/nginx/*.log {
-    daily
-    missingok
-    rotate 14
-    compress
-    delaycompress
-    notifempty
-    postrotate
-        docker kill -s USR1 aitrademaestro_nginx
-    endscript
-}
-EOF
+# Download sul computer locale
+scp root@IP_VPS:~/.env.production.backup_* ~/Desktop/
 ```
 
-## Performance Optimization
+## 📞 Supporto e Troubleshooting
 
-### 1. Database Optimization
+### Checklist Diagnostica
 
-```sql
--- Create indexes for performance
-CREATE INDEX CONCURRENTLY idx_users_email ON users(email);
-CREATE INDEX CONCURRENTLY idx_sessions_user_id ON sessions(user_id);
-CREATE INDEX CONCURRENTLY idx_trades_created_at ON trades(created_at);
+Se l'applicazione non funziona, segui questa checklist:
 
--- Analyze tables
-ANALYZE;
+**1. Verifica che i container siano running:**
+```bash
+docker ps
+# Dovresti vedere 6 container: nginx, certbot, postgres, redis, backend, frontend
 ```
 
-### 2. Caching Strategy
-
-```python
-# Redis caching configuration
-CACHE_CONFIG = {
-    'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://redis:6379/0',
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-        },
-        'KEY_PREFIX': 'aitrademaestro',
-        'TIMEOUT': 300,
-    }
-}
+**2. Controlla i log per errori:**
+```bash
+./scripts/prod/logs.sh
+# Premi Ctrl+C per uscire
 ```
 
-### 3. CDN Integration
-
-```nginx
-# CDN configuration
-location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2)$ {
-    expires 1y;
-    add_header Cache-Control "public, immutable";
-    add_header Vary Accept-Encoding;
-
-    # Optional: redirect to CDN
-    # return 302 https://cdn.aitrademaestro.com$uri;
-}
+**3. Verifica la connessione al database:**
+```bash
+docker exec aitrademaestro-postgres pg_isready -U postgres
+# Output atteso: accepting connections
 ```
 
-## Security Best Practices
+**4. Testa il backend:**
+```bash
+curl https://aitrademaestro.ddns.net/api/health
+# Dovrebbe rispondere con status 200 OK
+```
 
-### 1. Container Security
+**5. Verifica DNS:**
+```bash
+dig aitrademaestro.ddns.net
+# Deve mostrare l'IP del tuo VPS
+```
+
+**6. Controlla il firewall:**
+```bash
+sudo ufw status
+# Porte 80 e 443 devono essere ALLOW
+```
+
+**7. Verifica certificato SSL:**
+```bash
+docker-compose -f docker-compose.prod.yml run --rm certbot certificates
+# Mostra info sui certificati attivi
+```
+
+### Comandi Utili Rapidi
 
 ```bash
-# Run containers as non-root user
-# Already configured in Dockerfiles
+# Ferma tutto
+./scripts/prod/stop.sh
 
-# Scan images for vulnerabilities
-docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-    aquasec/trivy image aitrademaestro_backend:latest
+# Avvia tutto
+./scripts/prod/start.sh
 
-# Update base images regularly
-docker pull node:18-alpine
-docker pull python:3.11-slim
-```
+# Riavvia tutto
+./scripts/prod/restart.sh
 
-### 2. Network Security
+# Vedi i log
+./scripts/prod/logs.sh
 
-```bash
-# Setup fail2ban for nginx
-cat > /etc/fail2ban/jail.d/nginx.conf << 'EOF'
-[nginx-http-auth]
-enabled = true
-port = http,https
-logpath = /opt/aitrademaestro/logs/nginx/error.log
-
-[nginx-limit-req]
-enabled = true
-port = http,https
-logpath = /opt/aitrademaestro/logs/nginx/error.log
-maxretry = 10
-findtime = 600
-bantime = 7200
-EOF
-
-sudo systemctl restart fail2ban
-```
-
-### 3. Secrets Management
-
-```bash
-# Use Docker secrets for sensitive data
-echo "super-secret-db-password" | docker secret create db_password -
-echo "super-secret-api-key" | docker secret create api_key -
-
-# Update docker-compose to use secrets
-# secrets:
-#   db_password:
-#     external: true
-#   api_key:
-#     external: true
-```
-
-## Troubleshooting Production
-
-### 1. Container Issues
-
-```bash
-# View container logs
-docker-compose logs -f backend
-docker-compose logs -f frontend
-docker-compose logs -f db
-
-# Enter container for debugging
-docker-compose exec backend bash
-docker-compose exec db psql -U $POSTGRES_USER $POSTGRES_DB
-
-# Check container resources
+# Controlla risorse
 docker stats
+
+# Controlla spazio disco
+df -h
+
+# Pulisci Docker (libera spazio)
+docker system prune -a
+
+# Accedi al database
+docker exec -it aitrademaestro-postgres psql -U postgres aitrademaestro
+
+# Accedi a Redis
+docker exec -it aitrademaestro-redis redis-cli
+
+# Vedi variabili d'ambiente
+cat .env.production
 ```
 
-### 2. Performance Issues
+### Contatti e Risorse
+
+- **Repository GitHub:** [Link al tuo repo]
+- **Documentazione Docker:** https://docs.docker.com/
+- **Let's Encrypt:** https://letsencrypt.org/docs/
+- **Nginx Docs:** https://nginx.org/en/docs/
+
+---
+
+## ✅ Riepilogo Finale
+
+**🎯 Per deployare da zero:**
 
 ```bash
-# Monitor system resources
-htop
-iotop
-nethogs
+# 1. Configura DNS → aitrademaestro.ddns.net punta al tuo VPS
+# 2. SSH nel VPS
+ssh root@IP_VPS
 
-# Check database performance
-docker-compose exec db psql -U $POSTGRES_USER $POSTGRES_DB -c "
-SELECT query, calls, total_time, rows, mean_time
-FROM pg_stat_statements
-ORDER BY mean_time DESC
-LIMIT 10;"
+# 3. Clona e setup
+cd ~/web_apps
+git clone <repo-url> ai-trade-maestro-video-social
+cd ai-trade-maestro-video-social
+./scripts/dev/setup.sh
+
+# 4. Configura variabili
+cp .env.production.example .env.production
+nano .env.production  # Inserisci password generate
+
+# 5. Deploy!
+./scripts/prod/deploy.sh
+
+# 6. Configura firewall
+sudo ufw allow 22/tcp
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw enable
 ```
 
-### 3. SSL/Certificate Issues
+**🚀 L'app sarà live su:** https://aitrademaestro.ddns.net
 
-```bash
-# Check SSL certificate
-openssl s_client -connect aitrademaestro.com:443 -servername aitrademaestro.com
+---
 
-# Renew Let's Encrypt certificate
-sudo certbot renew
-sudo systemctl reload nginx
-```
-
-## Disaster Recovery
-
-### 1. Full System Restore
-
-```bash
-# Stop all services
-docker-compose -f docker-compose.prod.yml down
-
-# Restore database
-gunzip -c $BACKUP_DIR/database.sql.gz | docker-compose exec -T db psql -U $POSTGRES_USER $POSTGRES_DB
-
-# Restore Redis
-gunzip -c $BACKUP_DIR/redis.rdb.gz > ./data/redis/dump.rdb
-
-# Restore application data
-tar -xzf $BACKUP_DIR/uploads.tar.gz -C ./
-
-# Start services
-docker-compose -f docker-compose.prod.yml up -d
-```
-
-### 2. Rollback Strategy
-
-```bash
-# Tag current deployment
-git tag v1.0.$(date +%Y%m%d_%H%M%S)
-
-# Rollback to previous version
-git checkout v1.0.previous
-./deploy.sh
-```
-
-Questa guida fornisce una base solida per il deployment in produzione di AI TradeMaestro con considerazioni per sicurezza, performance e manutenibilità.
+**⚠️ Note Importanti:**
+- ✅ Fai backup regolari del database
+- ✅ Monitora i log per errori
+- ✅ Tieni aggiornato il sistema operativo: `sudo apt-get update && sudo apt-get upgrade`
+- ✅ I certificati SSL si rinnovano automaticamente ogni 90 giorni
+- ✅ Salva le password in un password manager
+- ❌ MAI committare `.env.production` su Git
