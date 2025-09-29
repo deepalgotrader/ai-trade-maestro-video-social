@@ -1,0 +1,36 @@
+{
+  "app": {
+    "name": "AI TradeMaestro",
+    "domain": "aitrademaestro.com",
+    "version": "1.0.0",
+    "description": "Modern AI Trading Platform"
+  },
+  "colors": {
+    "primary": "#0AD9E4",
+    "secondary": "#FFD300",
+    "background": "#FFFFFF",
+    "text": "#000000"
+  },
+  "urls": {
+    "frontend": {
+      "dev": "http://localhost:3000",
+      "production": "https://aitrademaestro.com"
+    },
+    "backend": {
+      "dev": "http://localhost:8000",
+      "production": "https://api.aitrademaestro.com"
+    }
+  },
+  "docker": {
+    "frontend": {
+      "image": "ai-trademaestro-frontend",
+      "container": "frontend-container",
+      "port": 3000
+    },
+    "backend": {
+      "image": "ai-trademaestro-backend",
+      "container": "backend-container",
+      "port": 8000
+    }
+  }
+}
