@@ -76,7 +76,7 @@ services:
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
       - SECRET_KEY=${SECRET_KEY}
       - ENVIRONMENT=production
-      - ALLOWED_ORIGINS=https://aitrademaestro.com,https://www.aitrademaestro.com
+      - ALLOWED_ORIGINS=https://aitrademaestro.ddns.net
     depends_on:
       postgres:
         condition: service_healthy
@@ -93,12 +93,12 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=https://aitrademaestro.com/api
+        - NEXT_PUBLIC_API_URL=https://aitrademaestro.ddns.net/api
     container_name: aitrademaestro-frontend
     restart: unless-stopped
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=https://aitrademaestro.com/api
+      - NEXT_PUBLIC_API_URL=https://aitrademaestro.ddns.net/api
     depends_on:
       - backend
     networks:

@@ -21,8 +21,8 @@ docker-compose -f docker-compose.prod.yml up -d
 
 echo ""
 echo "Services started successfully!"
-echo "  - Frontend: https://aitrademaestro.com"
-echo "  - Backend API: https://aitrademaestro.com/api"
-echo "  - Backend Docs: https://aitrademaestro.com/docs"
+echo "  - Frontend: https://aitrademaestro.ddns.net"
+echo "  - Backend API: https://aitrademaestro.ddns.net/api"
+echo "  - Backend Docs: https://aitrademaestro.ddns.net/docs"
 echo ""
 echo "To view logs: ./scripts/prod/logs.sh"

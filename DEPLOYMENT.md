@@ -1,29 +1,29 @@
 # 🚀 Guida al Deployment in Produzione
 
-Questa guida ti aiuterà a deployare **AI TradeMaestro** in produzione sul tuo VPS con il dominio **aitrademaestro.com**.
+Questa guida ti aiuterà a deployare **AI TradeMaestro** in produzione sul tuo VPS con il dominio **aitrademaestro.ddns.net**.
 
 ## 📋 Prerequisiti
 
 1. **VPS/Server** con accesso root o sudo
-2. **Dominio registrato**: aitrademaestro.com
+2. **Dominio DDNS configurato**: aitrademaestro.ddns.net
 3. **Porte aperte**: 80 (HTTP) e 443 (HTTPS)
-4. **DNS configurato** correttamente
+4. **DNS puntato correttamente** al tuo VPS
 
-## 🌐 Passo 1: Configurazione DNS
+## 🌐 Passo 1: Configurazione DDNS
 
-Accedi al pannello di controllo del tuo provider DNS e configura questi record:
+Il dominio **aitrademaestro.ddns.net** è un dominio dinamico (DDNS). Assicurati che:
 
-```
-Tipo    Nome    Valore                  TTL
-A       @       IP_DEL_TUO_VPS         3600
-A       www     IP_DEL_TUO_VPS         3600
-```
+1. Il tuo servizio DDNS (es. No-IP, DuckDNS, ecc.) sia configurato
+2. Il dominio punti all'IP pubblico del tuo VPS
+3. Se il tuo IP cambia, il servizio DDNS lo aggiorni automaticamente
 
-**Verifica la propagazione DNS:**
+**Verifica che il dominio punti al tuo VPS:**
 ```bash
-# Dovrebbe restituire l'IP del tuo VPS
-dig aitrademaestro.com
-dig www.aitrademaestro.com
+# Dovrebbe restituire l'IP pubblico del tuo VPS
+dig aitrademaestro.ddns.net
+
+# Oppure
+nslookup aitrademaestro.ddns.net
 ```
 
 ## 🔧 Passo 2: Setup Iniziale del Server
@@ -100,9 +100,9 @@ Questo script farà automaticamente:
 Dopo il deployment, verifica che tutto funzioni:
 
 **Nel browser:**
-- Frontend: https://aitrademaestro.com
-- Backend API: https://aitrademaestro.com/api
-- Documentazione API: https://aitrademaestro.com/docs
+- Frontend: https://aitrademaestro.ddns.net
+- Backend API: https://aitrademaestro.ddns.net/api
+- Documentazione API: https://aitrademaestro.ddns.net/docs
 
 **Verifica i servizi:**
 ```bash
@@ -184,7 +184,7 @@ docker-compose -f docker-compose.prod.yml restart nginx
 **Problema:** `Failed to obtain SSL certificate`
 
 **Soluzioni:**
-1. Verifica che il DNS sia configurato correttamente: `dig aitrademaestro.com`
+1. Verifica che il dominio DDNS punti al tuo VPS: `dig aitrademaestro.ddns.net`
 2. Assicurati che le porte 80 e 443 siano aperte: `sudo ufw status`
 3. Controlla i log di nginx: `docker logs aitrademaestro-nginx`
 4. Controlla i log di certbot: `docker logs aitrademaestro-certbot`

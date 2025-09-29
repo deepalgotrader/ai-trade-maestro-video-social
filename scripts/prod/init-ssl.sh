@@ -7,8 +7,8 @@ PROJECT_ROOT="$( cd "$SCRIPT_DIR/../.." && pwd )"
 
 cd "$PROJECT_ROOT" || exit 1
 
-DOMAIN="aitrademaestro.com"
-EMAIL="${SSL_EMAIL:-admin@aitrademaestro.com}"
+DOMAIN="aitrademaestro.ddns.net"
+EMAIL="${SSL_EMAIL:-admin@aitrademaestro.ddns.net}"
 
 echo "=========================================="
 echo "Initializing SSL Certificate"
@@ -39,8 +39,7 @@ docker-compose -f docker-compose.prod.yml run --rm certbot certonly \
     --agree-tos \
     --no-eff-email \
     $RENEW_FLAG \
-    -d $DOMAIN \
-    -d www.$DOMAIN
+    -d $DOMAIN
 
 if [ $? -eq 0 ]; then
     echo ""
