@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# Get the directory where the script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# Navigate to project root (two levels up from scripts/dev/)
+PROJECT_ROOT="$( cd "$SCRIPT_DIR/../.." && pwd )"
+
+cd "$PROJECT_ROOT" || exit 1
+
 echo "Starting AI TradeMaestro development environment..."
 
 # Check if Docker is running
