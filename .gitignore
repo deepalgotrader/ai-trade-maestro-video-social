@@ -11,6 +11,7 @@ backend/__pycache__/
 .env
 .env.local
 .env.*.local
+.env.production
 backend/.env
 frontend/.env
 
@@ -51,6 +52,10 @@ Thumbs.db
 
 # Docker volumes
 docker-volumes/
+
+# SSL Certificates
+nginx/certbot/conf/
+nginx/certbot/www/
 
 # Local configuration
 config.local.json
