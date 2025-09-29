@@ -78,9 +78,12 @@ ai-trade-video-social/
 │   ├── requirements.txt    # Python dependencies
 │   └── Dockerfile          # Backend container
 ├── scripts/                # Automation scripts
-│   ├── dev/               # Development scripts
-│   └── production/        # Production deployment scripts
-├── doc/                   # Documentation
+│   ├── dev/               # Development scripts (setup, start, stop)
+│   └── prod/              # Production deployment scripts
+├── doc/                    # Documentation
+│   ├── DEPLOYMENT.md      # Complete deployment guide
+│   ├── PRODUCTION-READY.md # Current production status
+│   └── README-DEPLOYMENT.md # Quick reference
 ├── img/                   # Static assets (logo)
 ├── config.json           # Application configuration
 └── docker-compose.yml    # Production orchestration
@@ -142,28 +145,30 @@ scripts\dev\start.bat
 scripts/dev/start.sh
 ```
 
-### Production (Local)
+### Production Deployment
+
+**📖 Complete Production Guide:** See [doc/PRODUCTION-READY.md](doc/PRODUCTION-READY.md)
+
+**Quick Start:**
 ```bash
-# Windows
-scripts\production\deploy.bat
+# 1. Setup (installs everything)
+./scripts/dev/setup.sh
 
-# Linux/Mac
-scripts/production/deploy.sh
-```
-
-### VPS Deployment
-```bash
-# 1. Setup VPS (run as root)
-sudo scripts/production/setup-vps.sh
-
-# 2. Upload project files to /opt/ai-trademaestro/
+# 2. Configure environment
+cp .env.production.example .env.production
+nano .env.production
 
 # 3. Deploy
-scripts/production/deploy.sh
+./scripts/prod/deploy.sh
 
-# 4. Setup SSL
-sudo certbot --nginx -d aitrademaestro.com -d www.aitrademaestro.com
+# 4. Enable HTTPS
+./scripts/prod/enable-ssl.sh
 ```
+
+**📚 Documentation:**
+- [Production Ready Status](doc/PRODUCTION-READY.md) - Current status & next steps
+- [Quick Start Guide](doc/README-DEPLOYMENT.md) - Fast deployment reference
+- [Complete Deployment Guide](doc/DEPLOYMENT.md) - Detailed step-by-step guide
 
 ## 🛠️ Development
 
