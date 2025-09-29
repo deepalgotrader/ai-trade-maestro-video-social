@@ -38,7 +38,8 @@
       "Bash(dir:*)",
       "Bash(xxd:*)",
       "Bash(./stop.bat)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

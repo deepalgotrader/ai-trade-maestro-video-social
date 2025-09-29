@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import { useState, FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../contexts/SettingsContext';
 import MissileAnimation from '../components/MissileAnimation';
 
-const Home: React.FC = () => {
+const Home = () => {
   const { t } = useTranslation();
   const { customResponse } = useSettings();
   const [inputText, setInputText] = useState('');
@@ -11,7 +11,7 @@ const Home: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showMissile, setShowMissile] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!inputText.trim()) return;
 

@@ -1,10 +1,9 @@
-import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 // Logo is served from public folder
 
-const Navbar: React.FC = () => {
+const Navbar = () => {
   const { t, i18n } = useTranslation();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();

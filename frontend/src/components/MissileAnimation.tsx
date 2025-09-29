@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface MissileAnimationProps {
   isActive: boolean;
   onComplete: () => void;
 }
 
-const MissileAnimation: React.FC<MissileAnimationProps> = ({ isActive, onComplete }) => {
+const MissileAnimation = ({ isActive, onComplete }: MissileAnimationProps) => {
   const [showTrail, setShowTrail] = useState(false);
 
   useEffect(() => {

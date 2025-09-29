@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import { useState, FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../contexts/SettingsContext';
 
-const Settings: React.FC = () => {
+const Settings = () => {
   const { t } = useTranslation();
   const { customResponse, setCustomResponse } = useSettings();
   const [inputValue, setInputValue] = useState(customResponse);
   const [isSaved, setIsSaved] = useState(false);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = (e: FormEvent) => {
     e.preventDefault();
     setCustomResponse(inputValue);
     setIsSaved(true);

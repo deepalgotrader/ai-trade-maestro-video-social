@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, ReactNode } from 'react';
 
 interface SettingsContextType {
   customResponse: string;
@@ -7,7 +7,7 @@ interface SettingsContextType {
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
-export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const [customResponse, setCustomResponse] = useState<string>(() => {
     return localStorage.getItem('customResponse') || 'This is your custom response text!';
   });
