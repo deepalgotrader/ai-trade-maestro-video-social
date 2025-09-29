@@ -312,16 +312,40 @@ docker logs aitrademaestro-postgres
 cat .env.production | grep POSTGRES
 ```
 
-**❌ Errore: "Port already in use"**
+**❌ Errore: "Port already in use" o "address already in use"**
 
+Questo errore si verifica quando un altro servizio (Apache, Nginx, ecc.) sta già usando le porte 80 o 443.
+
+**Soluzione Automatica (Consigliata):**
 ```bash
-# Trova quale processo usa la porta 80 o 443
+# Usa lo script automatico per liberare le porte
+./scripts/prod/fix-port-conflict.sh
+
+# Poi riprova il deployment
+./scripts/prod/deploy.sh
+```
+
+**Soluzione Manuale:**
+```bash
+# 1. Trova quale processo usa la porta 80 o 443
 sudo lsof -i :80
 sudo lsof -i :443
 
-# Ferma il processo conflittuale (es. Apache)
+# 2. Ferma Apache se presente
 sudo systemctl stop apache2
 sudo systemctl disable apache2
+
+# 3. Ferma Nginx di sistema se presente
+sudo systemctl stop nginx
+sudo systemctl disable nginx
+
+# 4. Forza la chiusura delle porte
+sudo fuser -k 80/tcp
+sudo fuser -k 443/tcp
+
+# 5. Verifica che le porte siano libere
+sudo lsof -i :80  # Non dovrebbe mostrare nulla
+sudo lsof -i :443 # Non dovrebbe mostrare nulla
 ```
 
 ## 🎉 Passo 5: Verifica
