@@ -20,14 +20,21 @@ echo ""
 
 # Check if certificate already exists
 if [ -d "nginx/certbot/conf/live/$DOMAIN" ]; then
-    echo "Certificate already exists for $DOMAIN"
-    read -p "Do you want to renew it? (y/n) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo "✓ Certificate already exists for $DOMAIN"
+    echo "Checking if renewal is needed..."
+
+    # Try to renew if certificate is close to expiry
+    docker-compose -f docker-compose.prod.yml run --rm certbot renew --quiet
+
+    if [ $? -eq 0 ]; then
+        echo "✓ Certificate is valid and up to date"
         exit 0
+    else
+        echo "Certificate needs attention, will request a new one..."
+        RENEW_FLAG="--force-renewal"
     fi
-    RENEW_FLAG="--force-renewal"
 else
+    echo "No existing certificate found, requesting a new one..."
     RENEW_FLAG=""
 fi
 
@@ -38,6 +45,7 @@ docker-compose -f docker-compose.prod.yml run --rm certbot certonly \
     --email $EMAIL \
     --agree-tos \
     --no-eff-email \
+    --non-interactive \
     $RENEW_FLAG \
     -d $DOMAIN
 
