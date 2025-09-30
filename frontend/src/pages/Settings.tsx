@@ -30,7 +30,7 @@ const Settings = () => {
           <form onSubmit={handleSave} className="space-y-4">
             <div>
               <label htmlFor="customResponse" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Custom Response Text
+                {t('custom_response_label')}
               </label>
               <textarea
                 id="customResponse"
@@ -47,7 +47,7 @@ const Settings = () => {
                 type="submit"
                 className="px-6 py-3 bg-primary hover:bg-opacity-90 text-white font-medium rounded-lg transition-all duration-200"
               >
-                Save Settings
+                {t('save_settings')}
               </button>
 
               {isSaved && (
@@ -55,7 +55,7 @@ const Settings = () => {
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  <span className="text-sm font-medium">Settings saved!</span>
+                  <span className="text-sm font-medium">{t('settings_saved')}</span>
                 </div>
               )}
             </div>

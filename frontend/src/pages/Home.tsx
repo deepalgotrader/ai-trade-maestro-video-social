@@ -17,13 +17,17 @@ const Home = () => {
     if (!inputText.trim()) return;
 
     setIsLoading(true);
-    setShowMissile(true);
 
     // Start missile animation immediately
     setTimeout(() => {
       setResponse(customResponse);
       setIsLoading(false);
     }, 4000); // Match missile animation duration with explosions
+  };
+
+  const handleGoLive = () => {
+    if (!response) return;
+    setShowMissile(true);
   };
 
   const handleMissileComplete = () => {
@@ -36,10 +40,10 @@ const Home = () => {
         {/* Header Section */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Welcome to {t('app_name')}
+            {t('welcome_title')} {t('app_name')}
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Your AI-powered trading assistant. Enter your message below and get intelligent responses.
+            {t('welcome_description')}
           </p>
         </div>
 
@@ -47,12 +51,12 @@ const Home = () => {
           {/* Input Section */}
           <div className="flex flex-col">
             <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-              Send Message
+              {t('send_message')}
             </h2>
             <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
               <div className="mb-4">
                 <label htmlFor="message" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Your Message
+                  {t('your_message')}
                 </label>
                 <textarea
                   id="message"
@@ -65,7 +69,7 @@ const Home = () => {
               </div>
               <div className="flex items-center justify-between">
                 <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {inputText.length} characters
+                  {inputText.length} {t('characters')}
                 </div>
                 <button
                   type="submit"
@@ -82,7 +86,7 @@ const Home = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                     </svg>
                   )}
-                  <span>{isLoading ? 'Sending...' : t('send')}</span>
+                  <span>{isLoading ? t('sending') : t('send')}</span>
                 </button>
               </div>
             </form>
@@ -91,7 +95,7 @@ const Home = () => {
           {/* Response Section */}
           <div className="flex flex-col">
             <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-              AI Response
+              {t('ai_response')}
             </h2>
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 min-h-[300px]">
               {response ? (
@@ -122,24 +126,39 @@ const Home = () => {
                       </svg>
                     </div>
                     <p className="text-gray-500 dark:text-gray-400 text-lg">
-                      AI response will appear here
+                      {t('ai_response_placeholder')}
                     </p>
                     <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
-                      Send a message to get started
+                      {t('send_to_start')}
                     </p>
                   </div>
                 </div>
               )}
             </div>
+
+            {/* Go Live Button */}
+            {response && (
+              <div className="mt-4 flex justify-center">
+                <button
+                  onClick={handleGoLive}
+                  className="px-8 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-bold rounded-lg transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" />
+                  </svg>
+                  <span>{t('go_live')}</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Quick Actions */}
         <div className="mt-8">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t('quick_actions')}</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <button
-              onClick={() => setInputText("What are the current market trends?")}
+              onClick={() => setInputText(t('market_trends_question'))}
               className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 text-left hover:shadow-lg transition-shadow border border-gray-200 dark:border-gray-700"
             >
               <div className="flex items-center space-x-3">
@@ -149,14 +168,14 @@ const Home = () => {
                   </svg>
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-900 dark:text-white">Market Trends</h4>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Ask about current trends</p>
+                  <h4 className="font-medium text-gray-900 dark:text-white">{t('market_trends')}</h4>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{t('market_trends_desc')}</p>
                 </div>
               </div>
             </button>
 
             <button
-              onClick={() => setInputText("Help me analyze my portfolio")}
+              onClick={() => setInputText(t('portfolio_analysis_question'))}
               className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 text-left hover:shadow-lg transition-shadow border border-gray-200 dark:border-gray-700"
             >
               <div className="flex items-center space-x-3">
@@ -166,14 +185,14 @@ const Home = () => {
                   </svg>
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-900 dark:text-white">Portfolio Analysis</h4>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Get portfolio insights</p>
+                  <h4 className="font-medium text-gray-900 dark:text-white">{t('portfolio_analysis')}</h4>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{t('portfolio_analysis_desc')}</p>
                 </div>
               </div>
             </button>
 
             <button
-              onClick={() => setInputText("What trading strategies do you recommend?")}
+              onClick={() => setInputText(t('strategies_question'))}
               className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 text-left hover:shadow-lg transition-shadow border border-gray-200 dark:border-gray-700"
             >
               <div className="flex items-center space-x-3">
@@ -183,8 +202,8 @@ const Home = () => {
                   </svg>
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-900 dark:text-white">Strategies</h4>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Learn trading strategies</p>
+                  <h4 className="font-medium text-gray-900 dark:text-white">{t('strategies')}</h4>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{t('strategies_desc')}</p>
                 </div>
               </div>
             </button>
