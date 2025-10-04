@@ -80,10 +80,15 @@ ai-trade-video-social/
 ├── scripts/                # Automation scripts
 │   ├── dev/               # Development scripts (setup, start, stop)
 │   └── prod/              # Production deployment scripts
-├── doc/                    # Documentation
-│   ├── DEPLOYMENT.md      # Complete deployment guide
-│   ├── PRODUCTION-READY.md # Current production status
-│   └── README-DEPLOYMENT.md # Quick reference
+│       ├── deploy-https.sh # One-command HTTPS deployment
+│       ├── logs.sh        # View container logs
+│       ├── restart.sh     # Restart services
+│       ├── start.sh       # Start services
+│       └── stop.sh        # Stop services
+├── docs/                   # Documentation
+│   ├── QUICKSTART.md      # Quick deployment guide
+│   ├── SETUP-VPS.md       # VPS configuration guide
+│   └── DEPLOYMENT.md      # Complete deployment guide
 ├── img/                   # Static assets (logo)
 ├── config.json           # Application configuration
 └── docker-compose.yml    # Production orchestration
@@ -147,28 +152,38 @@ scripts/dev/start.sh
 
 ### Production Deployment
 
-**📖 Complete Production Guide:** See [doc/PRODUCTION-READY.md](doc/PRODUCTION-READY.md)
-
-**Quick Start:**
+**One-Command HTTPS Deployment:**
 ```bash
-# 1. Setup (installs everything)
-./scripts/dev/setup.sh
-
-# 2. Configure environment
-cp .env.production.example .env.production
-nano .env.production
-
-# 3. Deploy
-./scripts/prod/deploy.sh
-
-# 4. Enable HTTPS
-./scripts/prod/enable-ssl.sh
+./scripts/prod/deploy-https.sh
 ```
 
+This script handles everything:
+- ✅ Stops conflicting services
+- ✅ Configures native nginx with SSL
+- ✅ Requests Let's Encrypt certificate
+- ✅ Builds and starts Docker containers
+- ✅ Runs database migrations
+- ✅ Verifies deployment
+
 **📚 Documentation:**
-- [Production Ready Status](doc/PRODUCTION-READY.md) - Current status & next steps
-- [Quick Start Guide](doc/README-DEPLOYMENT.md) - Fast deployment reference
-- [Complete Deployment Guide](doc/DEPLOYMENT.md) - Detailed step-by-step guide
+- [Quick Start Guide](docs/QUICKSTART.md) - Fast deployment reference
+- [VPS Setup Guide](docs/SETUP-VPS.md) - Detailed VPS configuration
+- [Deployment Guide](docs/DEPLOYMENT.md) - Complete deployment documentation
+
+**Useful Commands:**
+```bash
+# View logs
+./scripts/prod/logs.sh
+
+# Restart services
+./scripts/prod/restart.sh
+
+# Stop services
+./scripts/prod/stop.sh
+
+# Start services
+./scripts/prod/start.sh
+```
 
 ## 🛠️ Development
 
