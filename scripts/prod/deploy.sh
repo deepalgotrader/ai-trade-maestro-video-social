@@ -34,8 +34,12 @@ echo ">>> Building Docker images..."
 docker-compose -f docker-compose.prod.yml build --no-cache
 
 echo ""
-echo ">>> Copying correct Nginx configuration..."
-cp nginx/conf.d/app-initial.conf nginx/conf.d/app.conf
+echo ">>> Verifying Nginx configuration..."
+if [ ! -f nginx/conf.d/app.conf ]; then
+    echo "❌ nginx/conf.d/app.conf not found!"
+    exit 1
+fi
+echo "✓ Nginx configuration ready"
 
 echo ""
 echo ">>> Starting services..."
