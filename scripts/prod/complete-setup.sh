@@ -167,10 +167,15 @@ if ! sudo nginx -t; then
 fi
 log_success "Nginx configuration is valid"
 
-# Reload nginx
-log_info "Reloading nginx..."
-sudo systemctl reload nginx
-log_success "Nginx reloaded"
+# Start or reload nginx
+log_info "Starting/reloading nginx..."
+if sudo systemctl is-active --quiet nginx; then
+    sudo systemctl reload nginx
+    log_success "Nginx reloaded"
+else
+    sudo systemctl start nginx
+    log_success "Nginx started"
+fi
 
 echo ""
 
