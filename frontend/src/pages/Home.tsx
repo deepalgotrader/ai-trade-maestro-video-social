@@ -82,12 +82,12 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 py-4">
-        <div className="max-w-4xl mx-auto px-4">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 py-3 sm:py-4">
+        <div className="max-w-4xl mx-auto px-3 sm:px-4">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
             {t('app_name')}
           </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
             {t('welcome_description')}
           </p>
         </div>
@@ -95,7 +95,7 @@ const Home = () => {
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto px-4 py-6">
+        <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
           {messages.length === 0 ? (
             <div className="flex items-center justify-center h-full min-h-[400px]">
               <div className="text-center">
@@ -120,7 +120,7 @@ const Home = () => {
                   className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[80%] rounded-lg px-4 py-3 ${
+                    className={`max-w-[85%] sm:max-w-[80%] rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 ${
                       message.type === 'user'
                         ? 'bg-primary text-white'
                         : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700'
@@ -146,7 +146,7 @@ const Home = () => {
               {/* Thinking Animation */}
               {isThinking && (
                 <div className="flex justify-start">
-                  <div className="max-w-[80%] rounded-lg px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                  <div className="max-w-[85%] sm:max-w-[80%] rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
                     <div className="flex items-center space-x-2 mb-2">
                       <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
                         <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -172,9 +172,10 @@ const Home = () => {
 
       {/* Input Area - Fixed at bottom */}
       <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <form onSubmit={handleSubmit} className="flex items-end space-x-3">
-            <div className="flex-1">
+        <div className="max-w-4xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <form onSubmit={handleSubmit} className="space-y-3">
+            {/* Text Input */}
+            <div className="w-full">
               <textarea
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
@@ -186,33 +187,35 @@ const Home = () => {
                     handleSubmit(e);
                   }
                 }}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-none max-h-32"
-                style={{ minHeight: '52px' }}
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-none max-h-32 text-base"
+                style={{ minHeight: '56px' }}
               />
             </div>
-            <button
-              type="submit"
-              disabled={!inputText.trim() || isThinking}
-              className="px-6 py-3 bg-primary hover:bg-opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-all duration-200 flex items-center space-x-2 shadow-lg"
-              style={{ minHeight: '52px' }}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-              </svg>
-              <span>{t('send')}</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleGoLive}
-              disabled={messages.length === 0 || isGoingLive}
-              className="px-6 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl"
-              style={{ minHeight: '52px' }}
-            >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" />
-              </svg>
-              <span>{t('go_live')}</span>
-            </button>
+
+            {/* Buttons Row */}
+            <div className="flex gap-2 sm:gap-3">
+              <button
+                type="submit"
+                disabled={!inputText.trim() || isThinking}
+                className="flex-1 px-4 sm:px-6 py-3.5 bg-primary hover:bg-opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
+                <span className="text-base">{t('send')}</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleGoLive}
+                disabled={messages.length === 0 || isGoingLive}
+                className="flex-1 px-4 sm:px-6 py-3.5 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" />
+                </svg>
+                <span className="text-base">{t('go_live')}</span>
+              </button>
+            </div>
           </form>
 
           {/* Quick Actions - Below input */}
