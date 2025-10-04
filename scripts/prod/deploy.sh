@@ -73,50 +73,79 @@ fi
 
 echo ""
 echo "=========================================="
-echo "Setting up SSL/HTTPS..."
+echo "SSL/HTTPS Setup"
 echo "=========================================="
 echo ""
 
-# Run enable-ssl.sh automatically
-if [ -f "$SCRIPT_DIR/enable-ssl.sh" ]; then
-    echo ">>> Running SSL setup..."
-    bash "$SCRIPT_DIR/enable-ssl.sh"
-    SSL_EXIT=$?
+# Check if server is publicly accessible
+echo ">>> Checking public accessibility..."
+PUBLIC_HTTP=$(curl -s -o /dev/null -w "%{http_code}" http://aitrademaestro.ddns.net 2>/dev/null || echo "000")
 
-    if [ $SSL_EXIT -eq 0 ]; then
-        echo ""
-        echo "=========================================="
-        echo "🎉 Deployment Completed Successfully!"
-        echo "=========================================="
-        echo ""
-        echo "🔒 Your application is now live and secure at:"
-        echo "   https://aitrademaestro.ddns.net"
-        echo ""
-        echo "🌐 Available endpoints:"
-        echo "   • Frontend: https://aitrademaestro.ddns.net"
-        echo "   • API: https://aitrademaestro.ddns.net/api"
-        echo "   • API Docs: https://aitrademaestro.ddns.net/docs"
-        echo ""
-        echo "✓ All HTTP traffic automatically redirects to HTTPS"
-        echo "✓ SSL certificate auto-renews every 90 days"
-        echo "✓ WhatsApp and other services can now open your links"
-        echo ""
-    else
-        echo ""
-        echo "⚠️  SSL setup encountered issues"
-        echo ""
-        echo "Your site is accessible at:"
-        echo "  http://aitrademaestro.ddns.net"
-        echo ""
-        echo "To retry SSL setup manually:"
-        echo "  ./scripts/prod/enable-ssl.sh"
-        echo ""
+if [ "$PUBLIC_HTTP" = "200" ]; then
+    echo "✓ Server is publicly accessible"
+    echo ""
+    echo ">>> Attempting automatic SSL setup..."
+
+    # Try to get SSL certificate
+    if [ -f "$SCRIPT_DIR/enable-ssl.sh" ]; then
+        bash "$SCRIPT_DIR/enable-ssl.sh"
+        SSL_EXIT=$?
+
+        if [ $SSL_EXIT -eq 0 ]; then
+            # SSL succeeded
+            echo ""
+            echo "=========================================="
+            echo "🎉 Deployment Completed with HTTPS!"
+            echo "=========================================="
+            echo ""
+            echo "🔒 Your application is now live and secure at:"
+            echo "   https://aitrademaestro.ddns.net"
+            echo ""
+            echo "🌐 Available endpoints:"
+            echo "   • Frontend: https://aitrademaestro.ddns.net"
+            echo "   • API: https://aitrademaestro.ddns.net/api"
+            echo "   • API Docs: https://aitrademaestro.ddns.net/docs"
+            echo ""
+            echo "✓ All HTTP traffic automatically redirects to HTTPS"
+            echo "✓ SSL certificate auto-renews every 90 days"
+            echo "✓ WhatsApp and other services can now open your links"
+            echo ""
+        else
+            # SSL failed but HTTP works
+            echo ""
+            echo "=========================================="
+            echo "⚠️  Deployment Completed (HTTP Only)"
+            echo "=========================================="
+            echo ""
+            echo "Your application is accessible at:"
+            echo "   http://aitrademaestro.ddns.net"
+            echo ""
+            echo "SSL setup failed. Common issues:"
+            echo "  • Port 80/443 not accessible from internet"
+            echo "  • Firewall blocking Let's Encrypt validation"
+            echo "  • DNS not fully propagated"
+            echo ""
+            echo "To retry SSL manually:"
+            echo "  ./scripts/prod/enable-ssl.sh"
+            echo ""
+        fi
     fi
 else
-    echo "⚠️  SSL script not found, skipping SSL setup"
+    # Not publicly accessible
+    echo "⚠️  Server not publicly accessible (HTTP $PUBLIC_HTTP)"
     echo ""
-    echo "Your application is accessible at:"
-    echo "  http://aitrademaestro.ddns.net"
+    echo "=========================================="
+    echo "✓ Deployment Completed (Local Only)"
+    echo "=========================================="
+    echo ""
+    echo "Your application is running at:"
+    echo "   http://localhost"
+    echo ""
+    echo "⚠️  To enable public access and SSL:"
+    echo "  1. Ensure port 80/443 are open in firewall"
+    echo "  2. Configure port forwarding (if behind NAT)"
+    echo "  3. Verify DNS points to your public IP"
+    echo "  4. Run: ./scripts/prod/enable-ssl.sh"
     echo ""
 fi
 

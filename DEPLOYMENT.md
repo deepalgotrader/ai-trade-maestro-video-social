@@ -36,17 +36,22 @@ Before deploying, ensure you have:
 ```
 
 **What this does:**
-1. ✅ Stops existing services
-2. ✅ Builds Docker images
-3. ✅ Starts all services (nginx, frontend, backend, database)
-4. ✅ Runs database migrations
-5. ✅ **Automatically obtains SSL certificate from Let's Encrypt**
-6. ✅ **Configures HTTPS with automatic HTTP→HTTPS redirect**
-7. ✅ Tests and verifies HTTPS is working
+1. ✅ Validates `.env.production` file exists
+2. ✅ Stops existing services
+3. ✅ Builds Docker images
+4. ✅ Starts all services (nginx, frontend, backend, database)
+5. ✅ Runs database migrations
+6. ✅ Tests HTTP accessibility
+7. ✅ **Checks if server is publicly accessible**
+8. ✅ **Automatically obtains SSL certificate (if publicly accessible)**
+9. ✅ **Configures HTTPS with automatic HTTP→HTTPS redirect**
+10. ✅ Tests and verifies HTTPS is working
 
-**Expected Output:**
+**Possible Outcomes:**
+
+### ✅ Success - HTTPS Enabled
 ```
-🎉 Deployment Completed Successfully!
+🎉 Deployment Completed with HTTPS!
 
 🔒 Your application is now live and secure at:
    https://aitrademaestro.ddns.net
@@ -54,6 +59,36 @@ Before deploying, ensure you have:
 ✓ All HTTP traffic automatically redirects to HTTPS
 ✓ SSL certificate auto-renews every 90 days
 ✓ WhatsApp and other services can now open your links
+```
+
+### ⚠️ HTTP Only (Server Publicly Accessible but SSL Failed)
+```
+⚠️  Deployment Completed (HTTP Only)
+
+Your application is accessible at:
+   http://aitrademaestro.ddns.net
+
+SSL setup failed. Common issues:
+  • Port 80/443 not accessible from internet
+  • Firewall blocking Let's Encrypt validation
+  • DNS not fully propagated
+
+To retry SSL manually:
+  ./scripts/prod/enable-ssl.sh
+```
+
+### 📍 Local Only (Server Not Publicly Accessible)
+```
+✓ Deployment Completed (Local Only)
+
+Your application is running at:
+   http://localhost
+
+⚠️  To enable public access and SSL:
+  1. Ensure port 80/443 are open in firewall
+  2. Configure port forwarding (if behind NAT)
+  3. Verify DNS points to your public IP
+  4. Run: ./scripts/prod/enable-ssl.sh
 ```
 
 ---
