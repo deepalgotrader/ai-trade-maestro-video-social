@@ -62,22 +62,63 @@ if [ "$HTTP_CODE" = "200" ]; then
 else
     echo "⚠️  HTTP returned status $HTTP_CODE"
     echo "Check logs: docker logs aitrademaestro-nginx"
+    echo ""
+    echo "Deployment completed but HTTP is not responding correctly."
+    exit 1
 fi
 
 echo ""
 echo "=========================================="
-echo "Deployment Completed!"
+echo "Setting up SSL/HTTPS..."
 echo "=========================================="
 echo ""
-echo "Your application is accessible at:"
-echo "  http://aitrademaestro.ddns.net"
-echo ""
-echo "📌 Next step: Enable HTTPS"
-echo "  Run: ./scripts/prod/enable-ssl.sh"
-echo ""
-echo "Useful commands:"
-echo "  - Enable SSL: ./scripts/prod/enable-ssl.sh"
+
+# Run enable-ssl.sh automatically
+if [ -f "$SCRIPT_DIR/enable-ssl.sh" ]; then
+    echo ">>> Running SSL setup..."
+    bash "$SCRIPT_DIR/enable-ssl.sh"
+    SSL_EXIT=$?
+
+    if [ $SSL_EXIT -eq 0 ]; then
+        echo ""
+        echo "=========================================="
+        echo "🎉 Deployment Completed Successfully!"
+        echo "=========================================="
+        echo ""
+        echo "🔒 Your application is now live and secure at:"
+        echo "   https://aitrademaestro.ddns.net"
+        echo ""
+        echo "🌐 Available endpoints:"
+        echo "   • Frontend: https://aitrademaestro.ddns.net"
+        echo "   • API: https://aitrademaestro.ddns.net/api"
+        echo "   • API Docs: https://aitrademaestro.ddns.net/docs"
+        echo ""
+        echo "✓ All HTTP traffic automatically redirects to HTTPS"
+        echo "✓ SSL certificate auto-renews every 90 days"
+        echo "✓ WhatsApp and other services can now open your links"
+        echo ""
+    else
+        echo ""
+        echo "⚠️  SSL setup encountered issues"
+        echo ""
+        echo "Your site is accessible at:"
+        echo "  http://aitrademaestro.ddns.net"
+        echo ""
+        echo "To retry SSL setup manually:"
+        echo "  ./scripts/prod/enable-ssl.sh"
+        echo ""
+    fi
+else
+    echo "⚠️  SSL script not found, skipping SSL setup"
+    echo ""
+    echo "Your application is accessible at:"
+    echo "  http://aitrademaestro.ddns.net"
+    echo ""
+fi
+
+echo "📊 Useful commands:"
 echo "  - View logs: ./scripts/prod/logs.sh"
 echo "  - Stop: ./scripts/prod/stop.sh"
 echo "  - Restart: ./scripts/prod/restart.sh"
+echo "  - Force SSL: ./scripts/prod/force-enable-ssl.sh"
 echo ""
