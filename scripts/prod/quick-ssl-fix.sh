@@ -7,8 +7,19 @@ PROJECT_ROOT="$( cd "$SCRIPT_DIR/../.." && pwd )"
 
 cd "$PROJECT_ROOT" || exit 1
 
+# Load environment variables
+if [ -f .env.production ]; then
+    echo ">>> Loading environment variables..."
+    export $(grep -v '^#' .env.production | xargs)
+    echo "✓ Environment loaded"
+else
+    echo "❌ .env.production not found!"
+    exit 1
+fi
+
 DOMAIN="aitrademaestro.ddns.net"
 
+echo ""
 echo "=========================================="
 echo "Quick SSL Fix & Setup"
 echo "=========================================="
@@ -22,10 +33,10 @@ chmod -R 755 nginx/certbot/www
 
 echo "✓ Directories created"
 
-# 2. Restart nginx with new volume configuration
+# 2. Restart ONLY nginx (not all services)
 echo ""
 echo ">>> Restarting nginx with read-write access to certbot webroot..."
-docker-compose -f docker-compose.prod.yml up -d --force-recreate nginx
+docker-compose -f docker-compose.prod.yml up -d --no-deps --force-recreate nginx
 
 echo ""
 echo ">>> Waiting for nginx to start..."
