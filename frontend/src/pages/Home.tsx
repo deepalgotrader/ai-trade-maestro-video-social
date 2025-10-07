@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useSettings } from '../contexts/SettingsContext';
 import { useChat } from '../contexts/ChatContext';
 import { useConfig } from '../hooks/useConfig';
+import { useAutoExpandTextarea } from '../hooks/useAutoExpandTextarea';
 import MissileAnimation from '../components/MissileAnimation';
 
 const Home = () => {
@@ -15,6 +16,14 @@ const Home = () => {
   const [isThinking, setIsThinking] = useState(false);
   const [showMissile, setShowMissile] = useState(false);
   const [isGoingLive, setIsGoingLive] = useState(false);
+
+  // Auto-expand textarea hook for better mobile UX
+  const textareaRef = useAutoExpandTextarea(inputText, {
+    maxHeightPx: 200,
+    maxHeightVh: 30, // 30% of viewport on mobile
+    minHeight: 56,
+    enableMobileOptimization: true,
+  });
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -84,7 +93,10 @@ const Home = () => {
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 py-3 sm:py-4">
         <div className="max-w-4xl mx-auto px-3 sm:px-4">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+          <h1
+            className="text-2xl sm:text-3xl font-bold"
+            style={{ color: config?.colors.titleColor || '#0AD9E4' }}
+          >
             {t('app_name')}
           </h1>
           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -177,6 +189,7 @@ const Home = () => {
             {/* Text Input */}
             <div className="w-full">
               <textarea
+                ref={textareaRef}
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 placeholder={t('enter_text')}
@@ -187,8 +200,13 @@ const Home = () => {
                     handleSubmit(e);
                   }
                 }}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-none max-h-32 text-base"
-                style={{ minHeight: '56px' }}
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-150 ease-in-out text-base"
+                style={{
+                  minHeight: '56px',
+                  resize: 'none',
+                  overflow: 'hidden'
+                }}
+                aria-label={t('enter_text')}
               />
             </div>
 
@@ -222,26 +240,21 @@ const Home = () => {
           {config?.ui.chatbot.quickActions && (
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
               {config.ui.chatbot.quickActions.map((action) => {
-                const colorClasses = {
-                  blue: 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/40 hover:border-blue-300 dark:hover:border-blue-700',
-                  green: 'bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/40 hover:border-green-300 dark:hover:border-green-700',
-                  purple: 'bg-purple-50 dark:bg-purple-950/30 border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/40 hover:border-purple-300 dark:hover:border-purple-700',
-                }[action.color] || 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700';
-
-                const iconColorClasses = {
-                  blue: 'bg-blue-100 dark:bg-blue-900/50',
-                  green: 'bg-green-100 dark:bg-green-900/50',
-                  purple: 'bg-purple-100 dark:bg-purple-900/50',
-                }[action.color] || 'bg-gray-100 dark:bg-gray-700';
+                const shortcutBorderColor = config?.colors.shortcutBorder || '#FFD300';
+                const shortcutIconColor = config?.colors.shortcutIcon || '#FFD300';
 
                 return (
                   <button
                     key={action.id}
                     onClick={() => setInputText(t(action.promptKey))}
-                    className={`group relative p-3 border-2 rounded-xl transition-all duration-200 text-left ${colorClasses} transform hover:scale-105 hover:shadow-lg`}
+                    className="group relative p-3 border-2 rounded-xl transition-all duration-200 text-left bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transform hover:scale-105 hover:shadow-lg"
+                    style={{ borderColor: shortcutBorderColor }}
                   >
                     <div className="flex items-start space-x-3">
-                      <div className={`flex-shrink-0 w-10 h-10 ${iconColorClasses} rounded-lg flex items-center justify-center text-xl transition-transform group-hover:scale-110`}>
+                      <div
+                        className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center text-xl transition-transform group-hover:scale-110"
+                        style={{ color: shortcutIconColor }}
+                      >
                         {action.icon}
                       </div>
                       <div className="flex-1 min-w-0">

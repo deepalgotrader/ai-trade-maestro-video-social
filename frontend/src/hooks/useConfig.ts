@@ -10,6 +10,20 @@ interface QuickAction {
 }
 
 interface Config {
+  colors: {
+    primary: string;
+    secondary: string;
+    background: string;
+    text: string;
+    titleColor: string;
+    shortcutBorder: string;
+    shortcutIcon: string;
+  };
+  texts: {
+    appName: string;
+    welcomeDescription: string;
+    welcomeDescriptionIT: string;
+  };
   ui: {
     chatbot: {
       thinkingDelay: number;

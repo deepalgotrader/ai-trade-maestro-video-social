@@ -9,7 +9,15 @@
     "primary": "#0AD9E4",
     "secondary": "#FFD300",
     "background": "#FFFFFF",
-    "text": "#000000"
+    "text": "#000000",
+    "titleColor": "#0AD9E4",
+    "shortcutBorder": "#FFD300",
+    "shortcutIcon": "#FFD300"
+  },
+  "texts": {
+    "appName": "AI TradeMaestro",
+    "welcomeDescription": "Your AI-powered trading assistant.",
+    "welcomeDescriptionIT": "Il tuo assistente di trading basato su AI."
   },
   "urls": {
     "frontend": {

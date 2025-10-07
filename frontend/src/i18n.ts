@@ -16,7 +16,7 @@ const resources = {
 
       // Home page
       "welcome_title": "Welcome to",
-      "welcome_description": "Your AI-powered trading assistant. Enter your message below and get intelligent responses.",
+      "welcome_description": "Your AI-powered trading assistant.",
       "send_message": "Send Message",
       "your_message": "Your Message",
       "characters": "characters",
@@ -73,7 +73,7 @@ const resources = {
 
       // Home page
       "welcome_title": "Benvenuto su",
-      "welcome_description": "Il tuo assistente di trading basato su AI. Inserisci il tuo messaggio qui sotto e ricevi risposte intelligenti.",
+      "welcome_description": "Il tuo assistente di trading basato su AI.",
       "send_message": "Invia Messaggio",
       "your_message": "Il Tuo Messaggio",
       "characters": "caratteri",
