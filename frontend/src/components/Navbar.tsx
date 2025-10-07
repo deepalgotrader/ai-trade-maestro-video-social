@@ -57,7 +57,7 @@ const Navbar = () => {
             <div className="flex items-center space-x-2">
               <button
                 onClick={toggleTheme}
-                className="p-2 rounded-md bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                className="w-10 h-10 rounded-md bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
                 title={theme === 'light' ? t('dark') : t('light')}
               >
                 {theme === 'light' ? (
@@ -73,7 +73,7 @@ const Navbar = () => {
 
               <button
                 onClick={toggleLanguage}
-                className="p-2 rounded-md bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-xl"
+                className="w-10 h-10 rounded-md bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center justify-center text-xl"
                 title={t('language')}
               >
                 {i18n.language === 'en' ? '🇬🇧' : '🇮🇹'}
