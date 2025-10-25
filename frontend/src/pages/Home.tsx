@@ -146,7 +146,7 @@ const Home = () => {
                           </svg>
                         </div>
                         <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                          AI Assistant
+                          AI TradeMaestro
                         </span>
                       </div>
                     )}
@@ -166,7 +166,7 @@ const Home = () => {
                         </svg>
                       </div>
                       <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                        AI Assistant
+                        AI TradeMaestro
                       </span>
                     </div>
                     <div className="flex space-x-1">
